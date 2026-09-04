@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anı Defteri · Dijital Albüm</title>
+<meta name="description" content="Fotoğraflarını, notlarını ve müziğini tamamen kendi cihazında saklayan dijital albüm.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📔</text></svg>">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          kagit:  '#FDF6FB',
+          murekkep:'#3B2B4A',
+          soluk:  '#7C6A8A',
+          pembe:  '#F27BA9',
+          lila:   '#A78BFA',
+          nane:   '#6ED3B8',
+          seftali:'#FFC48C',
+          cizgi:  '#EFE2F0'
+        },
+        fontFamily: {
+          baslik: ['"Baloo 2"', 'system-ui', 'sans-serif'],
+          metin:  ['Nunito', 'system-ui', 'sans-serif']
+        },
+        boxShadow: {
+          kart: '0 2px 10px rgba(59,43,74,.07)',
+          kalk: '0 10px 28px rgba(59,43,74,.14)'
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  :root { color-scheme: light; }
+  body { font-family: Nunito, system-ui, sans-serif; background: #FDF6FB; color: #3B2B4A; }
+  h1,h2,h3,.font-baslik { font-family: "Baloo 2", system-ui, sans-serif; }
+
+  /* Kağıt dokusu: çok hafif noktalı zemin */
+  body::before{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+    background-image: radial-gradient(#EBD9EE 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  #uygulama { position: relative; z-index: 1; }
+
+  .btn { display:inline-flex; align-items:center; gap:.4rem; border-radius:999px; padding:.5rem .95rem;
+         font-weight:700; font-size:.9rem; transition:transform .12s ease, box-shadow .12s ease, background-color .12s ease; }
+  .btn:active { transform: translateY(1px) scale(.99); }
+  .btn-ana   { background:#F27BA9; color:#fff; box-shadow:0 4px 14px rgba(242,123,169,.35); }
+  .btn-ana:hover { background:#EE699E; }
+  .btn-yan   { background:#fff; color:#3B2B4A; border:1.5px solid #EFE2F0; }
+  .btn-yan:hover { border-color:#DCC7E0; }
+  .btn-sade  { background:transparent; color:#7C6A8A; padding:.35rem .6rem; }
+  .btn-sade:hover { background:#F6ECF7; color:#3B2B4A; }
+  .btn:disabled { opacity:.45; pointer-events:none; }
+
+  .alan { width:100%; border:1.5px solid #EFE2F0; background:#fff; border-radius:14px;
+          padding:.6rem .8rem; font-size:.95rem; color:#3B2B4A; }
+  .alan:focus { outline:none; border-color:#A78BFA; box-shadow:0 0 0 4px rgba(167,139,250,.16); }
+  :focus-visible { outline:3px solid #A78BFA; outline-offset:2px; border-radius:12px; }
+
+  .sekme { border-radius:999px; padding:.55rem 1.1rem; font-weight:700; font-size:.95rem; color:#7C6A8A; }
+  .sekme[aria-selected="true"] { background:#3B2B4A; color:#fff; }
+
+  /* Polaroid fotoğraf karesi */
+  .kare { background:#fff; padding:8px 8px 26px; border-radius:10px; box-shadow:0 2px 10px rgba(59,43,74,.10);
+          cursor:pointer; position:relative; }
+  .kare img { width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:6px; background:#F3EAF5; display:block; }
+  .kare:hover { box-shadow:0 10px 24px rgba(59,43,74,.16); }
+  .surukleniyor { opacity:.35; }
+  .kare .sira { position:absolute; top:14px; left:14px; background:rgba(59,43,74,.72); color:#fff;
+                font-size:.7rem; font-weight:700; border-radius:999px; padding:1px 7px; }
+
+  /* Slayt gösterisi */
+  #gosteri .slayt { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:0;
+                    transition: opacity .8s ease, transform .8s ease; will-change:opacity,transform; }
+  #gosteri .slayt.t-slide { transform: translateX(7%); }
+  #gosteri .slayt.t-zoom  { transform: scale(1.10); }
+  #gosteri .slayt.iceri { opacity:1; transform:none; }
+  #gosteri .slayt.iceri.t-zoom { animation: kaydir var(--sure,6s) ease-out forwards; }
+  #gosteri .slayt.disari { opacity:0; }
+  @keyframes kaydir { from { transform: scale(1.02); } to { transform: scale(1.13); } }
+  #gosteriKontrol { transition: opacity .3s ease; }
+  #gosteri.sakin #gosteriKontrol, #gosteri.sakin #gosteriUst { opacity:0; pointer-events:none; }
+
+  .timeline-nokta::before{ content:''; position:absolute; left:-21px; top:.55rem; width:9px; height:9px;
+                           border-radius:999px; background:#A78BFA; box-shadow:0 0 0 3px #F3ECFB; }
+
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb { background:#E3D2E8; border-radius:999px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen">
+<div id="uygulama" class="max-w-6xl mx-auto px-4 pb-24 pt-5">
+
+  <!-- ÜST BAŞLIK -->
+  <header class="flex flex-wrap items-center gap-3 mb-4">
+    <div class="flex items-center gap-3 mr-auto">
+      <div class="w-11 h-11 rounded-2xl bg-white shadow-kart grid place-items-center text-2xl">📔</div>
+      <div>
+        <h1 class="text-2xl leading-none font-baslik font-bold">Anı Defteri</h1>
+        <p class="text-xs text-soluk mt-1">Her şey senin cihazında kalır 🔒</p>
+      </div>
+    </div>
+    <button id="btnYedekAl" class="btn btn-yan">💾 Yedek al</button>
+    <button id="btnYedekYukle" class="btn btn-yan">📥 Yedeği geri yükle</button>
+  </header>
+
+  <!-- YEDEK HATIRLATICI -->
+  <div id="hatirlatici" class="hidden mb-4 rounded-2xl border-2 border-dashed border-seftali bg-white/80 p-3 text-sm flex items-start gap-3">
+    <span class="text-lg">⚠️</span>
+    <p id="hatirlaticiMetin" class="flex-1"></p>
+    <button class="btn btn-sade" onclick="document.getElementById('hatirlatici').classList.add('hidden')">✕</button>
+  </div>
+
+  <!-- SEKMELER -->
+  <div role="tablist" class="flex gap-1 p-1 bg-white rounded-full shadow-kart w-fit mb-5">
+    <button role="tab" class="sekme" data-sekme="tasarim"  aria-selected="true">🎨 Albüm tasarla</button>
+    <button role="tab" class="sekme" data-sekme="onizleme" aria-selected="false">▶️ Göster ve paylaş</button>
+    <button role="tab" class="sekme" data-sekme="zaman"    aria-selected="false">🕰️ Zaman tüneli</button>
+  </div>
+
+  <!-- ============ SEKME 1: TASARIM ============ -->
+  <section id="panel-tasarim" data-panel="tasarim">
+
+    <div class="flex items-center gap-2 mb-3">
+      <h2 class="text-lg font-baslik font-semibold mr-auto">Albümlerin</h2>
+      <button id="btnYeniAlbum" class="btn btn-ana">➕ Yeni albüm</button>
+    </div>
+
+    <div id="albumSeridi" class="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1"></div>
+
+    <div id="albumGovde" class="mt-4"></div>
+  </section>
+
+  <!-- ============ SEKME 2: ÖN İZLEME ============ -->
+  <section id="panel-onizleme" data-panel="onizleme" class="hidden">
+    <div class="grid lg:grid-cols-[1fr_320px] gap-5">
+
+      <div class="bg-white rounded-3xl shadow-kart p-5">
+        <h2 class="text-lg font-baslik font-semibold mb-1">Gösteriyi başlat</h2>
+        <p class="text-sm text-soluk mb-4">Fotoğraflar sırayla akar, müziğin çalar, notların altta görünür.</p>
+        <div id="onizlemeOzet" class="rounded-2xl bg-kagit border border-cizgi p-4 text-sm mb-4"></div>
+        <div class="flex flex-wrap gap-2">
+          <button id="btnGosteriBaslat" class="btn btn-ana">🎬 Gösteriyi başlat</button>
+          <button id="btnTamEkran" class="btn btn-yan">⛶ Tam ekranda başlat</button>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+        <div class="bg-white rounded-3xl shadow-kart p-5">
+          <h3 class="font-baslik font-semibold mb-3">Gösteri ayarları</h3>
+          <label class="block text-sm font-semibold mb-1">Geçiş teması</label>
+          <select id="ayarTema" class="alan mb-3">
+            <option value="t-fade">🌤️ Yumuşak geçiş (fade)</option>
+            <option value="t-slide">➡️ Kayarak (slide)</option>
+            <option value="t-zoom">🔍 Yaklaşarak (zoom)</option>
+          </select>
+          <label class="block text-sm font-semibold mb-1">Fotoğraf süresi: <span id="ayarSureMetin">5 sn</span></label>
+          <input id="ayarSure" type="range" min="2" max="12" step="1" value="5" class="w-full accent-pembe mb-3">
+          <label class="flex items-center gap-2 text-sm font-semibold">
+            <input id="ayarNotlar" type="checkbox" checked class="w-4 h-4 accent-pembe"> Notları ekranda göster
+          </label>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-kart p-5">
+          <h3 class="font-baslik font-semibold mb-1">Albümü dışa aktar</h3>
+          <p class="text-sm text-soluk mb-3">Bilgisayarına dosya olarak iner.</p>
+          <div class="flex flex-col gap-2">
+            <button id="btnPptx" class="btn btn-yan justify-center">📊 PowerPoint sunumu (.pptx)</button>
+            <button id="btnPdf" class="btn btn-yan justify-center">📄 PDF albüm (.pdf)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SEKME 3: ZAMAN TÜNELİ ============ -->
+  <section id="panel-zaman" data-panel="zaman" class="hidden">
+    <div class="bg-white rounded-3xl shadow-kart p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <h2 class="text-lg font-baslik font-semibold mr-auto">Neler yaptın?</h2>
+        <button id="btnGunlukTemizle" class="btn btn-sade">🧹 Geçmişi temizle</button>
+      </div>
+      <div id="zamanListesi" class="space-y-6"></div>
+    </div>
+    <div class="mt-4 rounded-3xl border border-cizgi bg-white/70 p-5 text-sm leading-relaxed">
+      <h3 class="font-baslik font-semibold mb-1">📦 Verilerin nerede duruyor?</h3>
+      <p class="text-soluk">Bütün fotoğraflar, müzikler ve notlar yalnızca bu tarayıcının kendi deposunda (IndexedDB) tutuluyor; hiçbir sunucuya gönderilmiyor. Tarayıcı verilerini temizlersen ya da başka bir cihaza geçersen albümler gitmiş olur. Bu yüzden ara ara <strong>Yedek al</strong> demek en iyisi.</p>
+      <p id="depoBilgi" class="mt-2 font-semibold"></p>
+    </div>
+  </section>
+</div>
+
+<!-- FOTOĞRAF DÜZENLEME PENCERESİ -->
+<div id="fotoPencere" class="hidden fixed inset-0 z-40 bg-murekkep/60 backdrop-blur-sm p-3 md:p-8 overflow-auto">
+  <div class="bg-white rounded-3xl max-w-4xl mx-auto shadow-kalk overflow-hidden grid md:grid-cols-2">
+    <div class="bg-kagit grid place-items-center p-4 min-h-[240px]">
+      <img id="fotoBuyuk" alt="" class="max-h-[60vh] w-auto rounded-xl object-contain">
+    </div>
+    <div class="p-5">
+      <div class="flex items-center mb-3">
+        <h3 class="font-baslik text-lg font-semibold mr-auto">Bu fotoğrafın hikâyesi</h3>
+        <button id="fotoKapat" class="btn btn-sade text-lg">✕</button>
+      </div>
+      <label class="block text-sm font-semibold mb-1">Başlık</label>
+      <input id="fotoBaslik" class="alan mb-3" placeholder="Örn: Deniz kenarında ilk gün">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-semibold mb-1">Tarih 📅</label>
+          <input id="fotoTarih" type="date" class="alan mb-3">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold mb-1">Yer 📍</label>
+          <input id="fotoYer" class="alan mb-3" placeholder="Çeşme">
+        </div>
+      </div>
+      <label class="block text-sm font-semibold mb-1">Anı / not ✍️</label>
+      <textarea id="fotoNot" rows="4" class="alan mb-3" placeholder="O gün ne oldu?"></textarea>
+      <label class="block text-sm font-semibold mb-1">Grubu</label>
+      <select id="fotoGrup" class="alan mb-4"></select>
+      <div class="flex flex-wrap gap-2">
+        <button id="fotoKaydet" class="btn btn-ana">💾 Kaydet</button>
+        <button id="fotoKapak" class="btn btn-yan">🖼️ Kapak yap</button>
+        <button id="fotoSil" class="btn btn-yan text-pembe">🗑️ Sil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLAYT GÖSTERİSİ -->
+<div id="gosteri" class="hidden fixed inset-0 z-50 bg-black select-none">
+  <div id="gosteriSahne" class="absolute inset-0 overflow-hidden"></div>
+  <div id="gosteriUst" class="absolute top-0 left-0 right-0 p-4 flex items-center gap-3 text-white/90
+        bg-gradient-to-b from-black/60 to-transparent">
+    <span id="gosteriAlbum" class="font-baslik font-semibold"></span>
+    <span id="gosteriSayac" class="text-sm text-white/70"></span>
+    <button id="gosteriKapat" class="ml-auto btn btn-sade text-white text-lg">✕</button>
+  </div>
+  <div class="absolute top-0 left-0 h-1 bg-pembe" id="gosteriCubuk" style="width:0"></div>
+  <div id="gosteriYazi" class="absolute left-0 right-0 bottom-24 px-6 text-center text-white pointer-events-none"></div>
+  <div id="gosteriKontrol" class="absolute bottom-0 left-0 right-0 p-4 flex justify-center gap-2
+        bg-gradient-to-t from-black/70 to-transparent">
+    <button id="gosteriGeri" class="btn btn-yan">⏮️</button>
+    <button id="gosteriDur" class="btn btn-ana">⏸️ Duraklat</button>
+    <button id="gosteriIleri" class="btn btn-yan">⏭️</button>
+    <button id="gosteriEkran" class="btn btn-yan">⛶</button>
+  </div>
+</div>
+
+<!-- BEKLEME + BİLDİRİM -->
+<div id="bekleme" class="hidden fixed inset-0 z-[60] bg-murekkep/55 backdrop-blur-sm grid place-items-center">
+  <div class="bg-white rounded-3xl px-8 py-6 text-center shadow-kalk">
+    <div class="text-3xl mb-2 animate-bounce">📔</div>
+    <p id="beklemeMetin" class="font-semibold">Hazırlanıyor…</p>
+  </div>
+</div>
+<div id="bildirimKutu" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+<script>
+"use strict";
+/* =========================================================================
+   ANI DEFTERİ — tek dosyalık dijital albüm
+   Bölümler: 1) Yardımcılar  2) Veritabanı  3) Medya  4) Günlük
+             5) Durum/başlangıç  6) Tasarım ekranı  7) Fotoğraf penceresi
+             8) Slayt gösterisi  9) Dışa aktarma  10) Yedekleme  11) Bağlantılar
+   Veri hiçbir sunucuya gitmez; her şey IndexedDB'de durur.
+   ========================================================================= */
+
+/* ---------- 1) YARDIMCILAR ---------------------------------------------- */
+const $  = (s, k = document) => k.querySelector(s);
+const $$ = (s, k = document) => Array.from(k.querySelectorAll(s));
+const kimlik = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const kacan = (s) => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const boyut = (n) => n >= 1e9 ? (n/1e9).toFixed(1)+' GB' : n >= 1e6 ? (n/1e6).toFixed(1)+' MB' : Math.max(1, Math.round(n/1e3))+' KB';
+const gunAdi = (ts) => new Date(ts).toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+const saat   = (ts) => new Date(ts).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+const tarihTR = (iso) => { if (!iso) return ''; const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('tr-TR', {day:'numeric', month:'long', year:'numeric'}); };
+const temizAd = (s) => (s || 'album').replace(/[\\/:*?"<>|]/g, '-').slice(0, 60);
+
+function bildir(mesaj, tur = 'ok') {
+  const renk = tur === 'hata' ? 'bg-pembe' : tur === 'bilgi' ? 'bg-lila' : 'bg-murekkep';
+  const el = document.createElement('div');
+  el.className = renk + ' text-white text-sm font-semibold px-4 py-2 rounded-full shadow-kalk';
+  el.textContent = mesaj;
+  $('#bildirimKutu').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; }, 2600);
+  setTimeout(() => el.remove(), 3100);
+}
+function bekle(metin = 'Hazırlanıyor…') { $('#beklemeMetin').textContent = metin; $('#bekleme').classList.remove('hidden'); }
+function bekleKapat() { $('#bekleme').classList.add('hidden'); }
+
+function dosyaSec(kabul, coklu = false) {
+  return new Promise(cozum => {
+    const g = document.createElement('input');
+    g.type = 'file'; g.accept = kabul; g.multiple = coklu; g.style.display = 'none';
+    document.body.appendChild(g);
+    g.addEventListener('change', () => { cozum(Array.from(g.files || [])); g.remove(); });
+    g.click();
+  });
+}
+
+/* Ağır kütüphaneler ancak gerekince yüklenir — açılış hızlı kalsın diye. */
+const KUTUPHANE = {
+  jszip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  pptx : 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+  jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+};
+const yuklenen = {};
+function kutuphaneGetir(url, kuresel) {
+  if (window[kuresel]) return Promise.resolve();
+  if (yuklenen[url]) return yuklenen[url];
+  yuklenen[url] = new Promise((cozum, hata) => {
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = cozum;
+    s.onerror = () => hata(new Error('Kütüphane yüklenemedi. İnternet bağlantını kontrol et.'));
+    document.head.appendChild(s);
+  });
+  return yuklenen[url];
+}
+
+/* ---------- 2) VERİTABANI (IndexedDB) ----------------------------------- */
+const VT = (() => {
+  let db = null;
+  function ac() {
+    return new Promise((cozum, hata) => {
+      const istek = indexedDB.open('AniDefteriDB', 1);
+      istek.onupgradeneeded = (e) => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('albumler')) d.createObjectStore('albumler', {keyPath: 'id'});
+        if (!d.objectStoreNames.contains('medya'))    d.createObjectStore('medya',    {keyPath: 'id'});
+        if (!d.objectStoreNames.contains('gunluk'))   d.createObjectStore('gunluk',   {keyPath: 'id'});
+        if (!d.objectStoreNames.contains('ayar'))     d.createObjectStore('ayar',     {keyPath: 'k'});
+      };
+      istek.onsuccess = () => { db = istek.result; cozum(db); };
+      istek.onerror  = () => hata(istek.error);
+    });
+  }
+  const sar = (istek) => new Promise((cozum, hata) => { istek.onsuccess = () => cozum(istek.result); istek.onerror = () => hata(istek.error); });
+  const depo = (ad, mod) => db.transaction(ad, mod).objectStore(ad);
+  return {
+    ac,
+    getir : (d, k) => sar(depo(d, 'readonly').get(k)),
+    hepsi : (d)    => sar(depo(d, 'readonly').getAll()),
+    yaz   : (d, v) => sar(depo(d, 'readwrite').put(v)),
+    sil   : (d, k) => sar(depo(d, 'readwrite').delete(k)),
+    bosalt: (d)    => sar(depo(d, 'readwrite').clear())
+  };
+})();
+
+/* ---------- 3) MEDYA ----------------------------------------------------- */
+const adresBellek = new Map();          // medyaId -> objectURL
+
+async function medyaEkle(dosya) {
+  const id = kimlik();
+  await VT.yaz('medya', {id, ad: dosya.name, tip: dosya.type || 'application/octet-stream', blob: dosya});
+  return id;
+}
+async function medyaAdres(id) {
+  if (!id) return null;
+  if (adresBellek.has(id)) return adresBellek.get(id);
+  const m = await VT.getir('medya', id);
+  if (!m) return null;
+  const adres = URL.createObjectURL(m.blob);
+  adresBellek.set(id, adres);
+  return adres;
+}
+async function medyaSil(id) {
+  if (!id) return;
+  if (adresBellek.has(id)) { URL.revokeObjectURL(adresBellek.get(id)); adresBellek.delete(id); }
+  await VT.sil('medya', id);
+}
+/* Dışa aktarma için: fotoğrafı küçültüp JPEG veri adresine çevirir. */
+async function medyaVeriAdresi(id, enBuyukKenar = 1600, kalite = 0.85) {
+  const m = await VT.getir('medya', id);
+  if (!m) return null;
+  let resim;
+  try { resim = await createImageBitmap(m.blob); }
+  catch { return null; }
+  const olcek = Math.min(1, enBuyukKenar / Math.max(resim.width, resim.height));
+  const g = Math.round(resim.width * olcek), y = Math.round(resim.height * olcek);
+  const tuval = document.createElement('canvas');
+  tuval.width = g; tuval.height = y;
+  const bg = tuval.getContext('2d');
+  bg.fillStyle = '#000'; bg.fillRect(0, 0, g, y);
+  bg.drawImage(resim, 0, 0, g, y);
+  resim.close && resim.close();
+  return {veri: tuval.toDataURL('image/jpeg', kalite), g, y};
+}
+/* PDF'te Türkçe karakterler bozulmasın diye yazıyı görsele çeviriyoruz. */
+function yaziGorseli(satirlar, {genislik = 2200, punto = 46, renk = '#3B2B4A', hiza = 'left', kalin = false, aralik = 1.35} = {}) {
+  const tuval = document.createElement('canvas');
+  let bg = tuval.getContext('2d');
+  const yazitipi = `${kalin ? '700' : '400'} ${punto}px Nunito, Arial, sans-serif`;
+  bg.font = yazitipi;
+  const dolgu = 10, sinir = genislik - dolgu * 2, cikti = [];
+  satirlar.filter(Boolean).forEach(satir => {
+    let mevcut = '';
+    satir.toString().split(/\s+/).forEach(kelime => {
+      const deneme = mevcut ? mevcut + ' ' + kelime : kelime;
+      if (bg.measureText(deneme).width > sinir && mevcut) { cikti.push(mevcut); mevcut = kelime; }
+      else mevcut = deneme;
+    });
+    cikti.push(mevcut);
+  });
+  tuval.width = genislik;
+  tuval.height = Math.max(1, Math.ceil(cikti.length * punto * aralik) + dolgu * 2);
+  bg = tuval.getContext('2d');
+  bg.font = yazitipi; bg.fillStyle = renk; bg.textBaseline = 'top';
+  cikti.forEach((satir, i) => {
+    const x = hiza === 'center' ? (genislik - bg.measureText(satir).width) / 2 : dolgu;
+    bg.fillText(satir, x, dolgu + i * punto * aralik);
+  });
+  return {veri: tuval.toDataURL('image/png'), g: tuval.width, y: tuval.height};
+}
+
+/* ---------- 4) GÜNLÜK (zaman takibi) ------------------------------------ */
+const SIMGE = {album:'📁', grup:'🗂️', foto:'🖼️', duzen:'✏️', sil:'🗑️', muzik:'🎵', disa:'📤', yedek:'💾', geri:'📥', gosteri:'🎬'};
+async function gunlukEkle(tur, metin) {
+  const kayit = {id: kimlik(), ts: Date.now(), tur, metin};
+  await VT.yaz('gunluk', kayit);
+  durum.gunluk.push(kayit);
+  if (durum.sekme === 'zaman') zamanCiz();
+}
+
+/* ---------- 5) DURUM VE BAŞLANGIÇ --------------------------------------- */
+const durum = {
+  albumler: [],
+  gunluk: [],
+  seciliAlbum: null,
+  seciliFoto: null,          // {grupId, fotoId}
+  sekme: 'tasarim',
+  siralayicilar: []
+};
+const albumBul = () => durum.albumler.find(a => a.id === durum.seciliAlbum) || null;
+const tumFotograflar = (a) => !a ? [] : a.gruplar.flatMap(g => g.fotograflar.map(f => ({...f, grupAdi: g.ad})));
+
+async function albumKaydet(a) {
+  a.guncellendi = Date.now();
+  await VT.yaz('albumler', JSON.parse(JSON.stringify(a)));
+}
+
+async function baslat() {
+  await VT.ac();
+  if (navigator.storage && navigator.storage.persist) {
+    try { await navigator.storage.persist(); } catch (e) { /* tarayıcı izin vermedi, sorun değil */ }
+  }
+  durum.albumler = (await VT.hepsi('albumler')).sort((a, b) => a.olusturuldu - b.olusturuldu);
+  durum.gunluk   = (await VT.hepsi('gunluk')).sort((a, b) => a.ts - b.ts);
+  const sonAlbum = await VT.getir('ayar', 'sonAlbum');
+  durum.seciliAlbum = (sonAlbum && durum.albumler.some(a => a.id === sonAlbum.v)) ? sonAlbum.v
+                    : (durum.albumler[0] ? durum.albumler[0].id : null);
+  const gosteriAyar = await VT.getir('ayar', 'gosteri');
+  if (gosteriAyar) {
+    $('#ayarTema').value = gosteriAyar.v.tema || 't-fade';
+    $('#ayarSure').value = gosteriAyar.v.sure || 5;
+  }
+  sureYaz();
+  seritCiz(); albumCiz(); onizlemeCiz(); zamanCiz();
+  depoDurumu(); yedekHatirlat();
+}
+
+/* ---------- 6) TASARIM EKRANI ------------------------------------------- */
+function seritCiz() {
+  const kutu = $('#albumSeridi');
+  if (!durum.albumler.length) { kutu.innerHTML = ''; return; }
+  kutu.innerHTML = durum.albumler.map(a => {
+    const secili = a.id === durum.seciliAlbum;
+    const sayi = tumFotograflar(a).length;
+    return `<button data-album="${a.id}" class="shrink-0 text-left rounded-2xl px-4 py-3 min-w-[170px] transition
+      ${secili ? 'bg-murekkep text-white shadow-kalk' : 'bg-white shadow-kart hover:shadow-kalk'}">
+      <div class="text-xl leading-none mb-1">${secili ? '📖' : '📁'}</div>
+      <div class="font-baslik font-semibold leading-tight">${kacan(a.ad)}</div>
+      <div class="text-xs ${secili ? 'text-white/70' : 'text-soluk'}">${sayi} fotoğraf · ${a.gruplar.length} grup</div>
+    </button>`;
+  }).join('');
+  $$('#albumSeridi [data-album]').forEach(b => b.onclick = async () => {
+    durum.seciliAlbum = b.dataset.album;
+    await VT.yaz('ayar', {k: 'sonAlbum', v: durum.seciliAlbum});
+    seritCiz(); albumCiz(); onizlemeCiz();
+  });
+}
+
+function albumCiz() {
+  const kutu = $('#albumGovde');
+  const a = albumBul();
+  durum.siralayicilar.forEach(s => s.destroy());
+  durum.siralayicilar = [];
+
+  if (!a) {
+    kutu.innerHTML = `<div class="bg-white rounded-3xl shadow-kart p-10 text-center">
+      <div class="text-5xl mb-3">🌸</div>
+      <h3 class="font-baslik text-xl font-semibold mb-1">Henüz albüm yok</h3>
+      <p class="text-soluk mb-4">İlk albümünü oluştur, sonra içine gruplar ve fotoğraflar ekle.</p>
+      <button class="btn btn-ana" onclick="yeniAlbum()">➕ İlk albümü oluştur</button>
+    </div>`;
+    return;
+  }
+
+  kutu.innerHTML = `
+    <div class="bg-white rounded-3xl shadow-kart p-5 mb-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="mr-auto">
+          <h3 class="font-baslik text-xl font-semibold">${kacan(a.ad)}</h3>
+          <p class="text-sm text-soluk">Oluşturuldu ${gunAdi(a.olusturuldu)}${a.muzik ? ' · 🎵 ' + kacan(a.muzik.ad) : ''}</p>
+        </div>
+        <button class="btn btn-yan" data-is="ad">✏️ Adını değiştir</button>
+        <button class="btn btn-yan" data-is="muzik">🎵 ${a.muzik ? 'Müziği değiştir' : 'Müzik ekle'}</button>
+        ${a.muzik ? '<button class="btn btn-sade" data-is="muzikSil">Müziği kaldır</button>' : ''}
+        <button class="btn btn-sade text-pembe" data-is="albumSil">🗑️ Albümü sil</button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 mb-3">
+      <h3 class="font-baslik text-lg font-semibold mr-auto">Gruplar</h3>
+      <button class="btn btn-ana" data-is="yeniGrup">➕ Yeni grup</button>
+    </div>
+
+    <div id="grupListesi" class="space-y-4"></div>`;
+
+  kutu.querySelector('[data-is="ad"]').onclick        = () => albumAdiDegistir(a);
+  kutu.querySelector('[data-is="muzik"]').onclick     = () => muzikEkle(a);
+  kutu.querySelector('[data-is="albumSil"]').onclick  = () => albumSil(a);
+  kutu.querySelector('[data-is="yeniGrup"]').onclick  = () => yeniGrup(a);
+  const mSil = kutu.querySelector('[data-is="muzikSil"]');
+  if (mSil) mSil.onclick = async () => {
+    await medyaSil(a.muzik.medyaId); a.muzik = null;
+    await albumKaydet(a); await gunlukEkle('muzik', `"${a.ad}" albümünün müziği kaldırıldı`);
+    albumCiz(); onizlemeCiz();
+  };
+
+  gruplariCiz(a);
+}
+
+function gruplariCiz(a) {
+  const kutu = $('#grupListesi');
+  durum.siralayicilar.forEach(x => { try { x.destroy(); } catch (e) {} });
+  durum.siralayicilar = [];
+  if (!a.gruplar.length) {
+    kutu.innerHTML = `<div class="bg-white rounded-3xl shadow-kart p-8 text-center">
+      <div class="text-4xl mb-2">🗂️</div>
+      <p class="font-semibold mb-1">Bu albümde henüz grup yok</p>
+      <p class="text-soluk text-sm">Örneğin "Gidilen şehirler" ya da "Doğum günü" diye bir grup aç.</p>
+    </div>`;
+    return;
+  }
+
+  kutu.innerHTML = a.gruplar.map((g, i) => `
+    <div class="bg-white rounded-3xl shadow-kart p-5" data-grup="${g.id}">
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <div class="mr-auto">
+          <h4 class="font-baslik text-lg font-semibold">${kacan(g.ad)}</h4>
+          <p class="text-xs text-soluk">${g.fotograflar.length} fotoğraf</p>
+        </div>
+        <button class="btn btn-sade" data-g="yukari" ${i === 0 ? 'disabled' : ''} title="Yukarı taşı">⬆️</button>
+        <button class="btn btn-sade" data-g="asagi" ${i === a.gruplar.length - 1 ? 'disabled' : ''} title="Aşağı taşı">⬇️</button>
+        <button class="btn btn-sade" data-g="ad">✏️</button>
+        <button class="btn btn-sade text-pembe" data-g="sil">🗑️</button>
+        <button class="btn btn-ana" data-g="foto">➕ Fotoğraf ekle</button>
+      </div>
+      <div class="izgara grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" data-izgara="${g.id}">
+        ${g.fotograflar.map((f, j) => `
+          <figure class="kare" data-foto="${f.id}">
+            <img alt="${kacan(f.baslik || 'Fotoğraf')}" data-medya="${f.medyaId}">
+            <span class="sira">${j + 1}</span>
+            <figcaption class="absolute bottom-1.5 left-0 right-0 text-center text-[11px] text-soluk truncate px-2">
+              ${kacan(f.baslik || (f.not ? '📝 notlu' : 'başlık yok'))}
+            </figcaption>
+          </figure>`).join('')}
+      </div>
+      ${g.fotograflar.length ? '<p class="text-xs text-soluk mt-3">Sıralamak için fotoğrafları sürükle. 🖐️</p>'
+        : '<p class="text-sm text-soluk">Bu grup boş. Yukarıdaki düğmeyle fotoğraf ekle.</p>'}
+    </div>`).join('');
+
+  // Görselleri yükle
+  $$('#grupListesi img[data-medya]').forEach(async img => {
+    const adres = await medyaAdres(img.dataset.medya);
+    if (adres) img.src = adres;
+  });
+
+  // Düğmeler
+  a.gruplar.forEach(g => {
+    const kart = kutu.querySelector(`[data-grup="${g.id}"]`);
+    kart.querySelector('[data-g="foto"]').onclick   = () => fotografEkle(a, g);
+    kart.querySelector('[data-g="ad"]').onclick     = () => grupAdiDegistir(a, g);
+    kart.querySelector('[data-g="sil"]').onclick    = () => grupSil(a, g);
+    kart.querySelector('[data-g="yukari"]').onclick = () => grupTasi(a, g, -1);
+    kart.querySelector('[data-g="asagi"]').onclick  = () => grupTasi(a, g, 1);
+    kart.querySelectorAll('[data-foto]').forEach(el => el.onclick = () => fotoAc(g.id, el.dataset.foto));
+
+    // Sürükle-bırak sıralama
+    const izgara = kart.querySelector('[data-izgara]');
+    if (window.Sortable && g.fotograflar.length > 1) {
+      durum.siralayicilar.push(new Sortable(izgara, {
+        animation: 160, ghostClass: 'surukleniyor',
+        delay: 140, delayOnTouchOnly: true,
+        onEnd: async () => {
+          const yeniSira = Array.from(izgara.children).map(el => el.dataset.foto);
+          g.fotograflar.sort((x, y) => yeniSira.indexOf(x.id) - yeniSira.indexOf(y.id));
+          await albumKaydet(a);
+          await gunlukEkle('duzen', `"${g.ad}" grubunda fotoğraf sırası değişti`);
+          gruplariCiz(a); onizlemeCiz();
+        }
+      }));
+    }
+  });
+}
+
+/* --- Albüm / grup / fotoğraf işlemleri --- */
+async function yeniAlbum() {
+  const ad = prompt('Albümün adı ne olsun? 📁', '2026 Yaz Tatili');
+  if (!ad || !ad.trim()) return;
+  const a = {id: kimlik(), ad: ad.trim(), olusturuldu: Date.now(), guncellendi: Date.now(),
+             kapak: null, muzik: null, gruplar: [{id: kimlik(), ad: 'Genel', olusturuldu: Date.now(), fotograflar: []}]};
+  durum.albumler.push(a);
+  durum.seciliAlbum = a.id;
+  await albumKaydet(a);
+  await VT.yaz('ayar', {k: 'sonAlbum', v: a.id});
+  await gunlukEkle('album', `"${a.ad}" albümü oluşturuldu`);
+  seritCiz(); albumCiz(); onizlemeCiz(); yedekHatirlat();
+  bildir('Albüm hazır 🎉');
+}
+async function albumAdiDegistir(a) {
+  const ad = prompt('Yeni ad:', a.ad);
+  if (!ad || !ad.trim()) return;
+  const eski = a.ad; a.ad = ad.trim();
+  await albumKaydet(a); await gunlukEkle('duzen', `"${eski}" albümünün adı "${a.ad}" oldu`);
+  seritCiz(); albumCiz(); onizlemeCiz();
+}
+async function albumSil(a) {
+  if (!confirm(`"${a.ad}" albümü ve içindeki bütün fotoğraflar silinecek. Emin misin?`)) return;
+  for (const f of tumFotograflar(a)) await medyaSil(f.medyaId);
+  if (a.muzik) await medyaSil(a.muzik.medyaId);
+  await VT.sil('albumler', a.id);
+  durum.albumler = durum.albumler.filter(x => x.id !== a.id);
+  durum.seciliAlbum = durum.albumler[0] ? durum.albumler[0].id : null;
+  await gunlukEkle('sil', `"${a.ad}" albümü silindi`);
+  seritCiz(); albumCiz(); onizlemeCiz(); depoDurumu();
+}
+async function yeniGrup(a) {
+  const ad = prompt('Grup adı: 🗂️', 'Gidilen Şehirler');
+  if (!ad || !ad.trim()) return;
+  a.gruplar.push({id: kimlik(), ad: ad.trim(), olusturuldu: Date.now(), fotograflar: []});
+  await albumKaydet(a); await gunlukEkle('grup', `"${a.ad}" içine "${ad.trim()}" grubu eklendi`);
+  seritCiz(); albumCiz();
+}
+async function grupAdiDegistir(a, g) {
+  const ad = prompt('Yeni grup adı:', g.ad);
+  if (!ad || !ad.trim()) return;
+  const eski = g.ad; g.ad = ad.trim();
+  await albumKaydet(a); await gunlukEkle('duzen', `"${eski}" grubunun adı "${g.ad}" oldu`);
+  albumCiz(); onizlemeCiz();
+}
+async function grupSil(a, g) {
+  if (!confirm(`"${g.ad}" grubu ve içindeki ${g.fotograflar.length} fotoğraf silinecek. Emin misin?`)) return;
+  for (const f of g.fotograflar) await medyaSil(f.medyaId);
+  a.gruplar = a.gruplar.filter(x => x.id !== g.id);
+  await albumKaydet(a); await gunlukEkle('sil', `"${g.ad}" grubu silindi`);
+  seritCiz(); albumCiz(); onizlemeCiz(); depoDurumu();
+}
+async function grupTasi(a, g, yon) {
+  const i = a.gruplar.indexOf(g), j = i + yon;
+  if (j < 0 || j >= a.gruplar.length) return;
+  a.gruplar.splice(j, 0, a.gruplar.splice(i, 1)[0]);
+  await albumKaydet(a); albumCiz(); onizlemeCiz();
+}
+async function fotografEkle(a, g) {
+  const dosyalar = (await dosyaSec('image/*', true)).filter(d => d.type.startsWith('image/'));
+  if (!dosyalar.length) return;
+  bekle(`${dosyalar.length} fotoğraf kaydediliyor…`);
+  for (const d of dosyalar) {
+    const medyaId = await medyaEkle(d);
+    g.fotograflar.push({id: kimlik(), medyaId, dosyaAdi: d.name, baslik: '', tarih: '', yer: '', not: '', eklendi: Date.now()});
+    if (!a.kapak) a.kapak = medyaId;
+  }
+  await albumKaydet(a);
+  await gunlukEkle('foto', `"${g.ad}" grubuna ${dosyalar.length} fotoğraf eklendi`);
+  bekleKapat();
+  seritCiz(); albumCiz(); onizlemeCiz(); depoDurumu(); yedekHatirlat();
+  bildir(`${dosyalar.length} fotoğraf eklendi 🖼️`);
+}
+async function muzikEkle(a) {
+  const [d] = await dosyaSec('audio/*', false);
+  if (!d) return;
+  bekle('Müzik kaydediliyor…');
+  if (a.muzik) await medyaSil(a.muzik.medyaId);
+  a.muzik = {medyaId: await medyaEkle(d), ad: d.name};
+  await albumKaydet(a); await gunlukEkle('muzik', `"${a.ad}" albümüne müzik eklendi: ${d.name}`);
+  bekleKapat(); albumCiz(); onizlemeCiz(); depoDurumu();
+  bildir('Müzik hazır 🎵');
+}
+
+/* ---------- 7) FOTOĞRAF PENCERESİ --------------------------------------- */
+async function fotoAc(grupId, fotoId) {
+  const a = albumBul(); if (!a) return;
+  const g = a.gruplar.find(x => x.id === grupId);
+  const f = g && g.fotograflar.find(x => x.id === fotoId);
+  if (!f) return;
+  durum.seciliFoto = {grupId, fotoId};
+  $('#fotoBuyuk').src = (await medyaAdres(f.medyaId)) || '';
+  $('#fotoBaslik').value = f.baslik || '';
+  $('#fotoTarih').value  = f.tarih || '';
+  $('#fotoYer').value    = f.yer || '';
+  $('#fotoNot').value    = f.not || '';
+  $('#fotoGrup').innerHTML = a.gruplar.map(x => `<option value="${x.id}" ${x.id === grupId ? 'selected' : ''}>${kacan(x.ad)}</option>`).join('');
+  $('#fotoPencere').classList.remove('hidden');
+}
+function fotoKapat() { $('#fotoPencere').classList.add('hidden'); durum.seciliFoto = null; }
+
+async function fotoKaydet() {
+  const a = albumBul(); const s = durum.seciliFoto; if (!a || !s) return;
+  const g = a.gruplar.find(x => x.id === s.grupId);
+  const i = g.fotograflar.findIndex(x => x.id === s.fotoId);
+  const f = g.fotograflar[i];
+  f.baslik = $('#fotoBaslik').value.trim();
+  f.tarih  = $('#fotoTarih').value;
+  f.yer    = $('#fotoYer').value.trim();
+  f.not    = $('#fotoNot').value.trim();
+  const hedefId = $('#fotoGrup').value;
+  if (hedefId !== s.grupId) {
+    g.fotograflar.splice(i, 1);
+    a.gruplar.find(x => x.id === hedefId).fotograflar.push(f);
+  }
+  await albumKaydet(a);
+  await gunlukEkle('duzen', `Bir fotoğrafın notu güncellendi${f.baslik ? ': ' + f.baslik : ''}`);
+  fotoKapat(); albumCiz(); onizlemeCiz();
+  bildir('Kaydedildi 💾');
+}
+async function fotoSilAksiyon() {
+  const a = albumBul(); const s = durum.seciliFoto; if (!a || !s) return;
+  if (!confirm('Bu fotoğraf silinsin mi?')) return;
+  const g = a.gruplar.find(x => x.id === s.grupId);
+  const i = g.fotograflar.findIndex(x => x.id === s.fotoId);
+  const f = g.fotograflar[i];
+  await medyaSil(f.medyaId);
+  g.fotograflar.splice(i, 1);
+  if (a.kapak === f.medyaId) { const kalan = tumFotograflar(a)[0]; a.kapak = kalan ? kalan.medyaId : null; }
+  await albumKaydet(a); await gunlukEkle('sil', 'Bir fotoğraf silindi');
+  fotoKapat(); seritCiz(); albumCiz(); onizlemeCiz(); depoDurumu();
+}
+async function fotoKapakYap() {
+  const a = albumBul(); const s = durum.seciliFoto; if (!a || !s) return;
+  const g = a.gruplar.find(x => x.id === s.grupId);
+  const f = g.fotograflar.find(x => x.id === s.fotoId);
+  a.kapak = f.medyaId;
+  await albumKaydet(a); await gunlukEkle('duzen', 'Albüm kapağı değişti');
+  bildir('Kapak seçildi 🖼️');
+}
+
+/* ---------- 8) ÖN İZLEME VE SLAYT GÖSTERİSİ ----------------------------- */
+function onizlemeCiz() {
+  const a = albumBul();
+  const kutu = $('#onizlemeOzet');
+  if (!a) {
+    kutu.innerHTML = '<p class="text-soluk">Önce "Albüm tasarla" sekmesinden bir albüm seç.</p>';
+    return;
+  }
+  const fotolar = tumFotograflar(a);
+  const notlu = fotolar.filter(f => f.not).length;
+  kutu.innerHTML = `
+    <p class="font-baslik text-lg font-semibold">${kacan(a.ad)}</p>
+    <p class="text-soluk">${fotolar.length} fotoğraf · ${a.gruplar.length} grup · ${notlu} notlu anı</p>
+    <p class="text-soluk mt-1">${a.muzik ? '🎵 ' + kacan(a.muzik.ad) : '🔇 Müzik eklenmedi'}</p>`;
+}
+
+const Gosteri = {liste: [], sira: 0, zaman: null, oynuyor: false, ses: null, mevcutEl: null, gizleZaman: null};
+
+async function gosteriBaslat(tamEkran = false) {
+  const a = albumBul();
+  if (!a) { bildir('Önce bir albüm seç', 'hata'); return; }
+  const fotolar = tumFotograflar(a);
+  if (!fotolar.length) { bildir('Bu albümde fotoğraf yok', 'hata'); return; }
+
+  bekle('Gösteri hazırlanıyor…');
+  Gosteri.liste = [];
+  for (const f of fotolar) {
+    const adres = await medyaAdres(f.medyaId);
+    if (adres) Gosteri.liste.push({...f, adres});
+  }
+  bekleKapat();
+
+  $('#gosteriAlbum').textContent = a.ad;
+  $('#gosteriSahne').innerHTML = '';
+  Gosteri.mevcutEl = null;
+  Gosteri.sira = 0;
+  Gosteri.oynuyor = true;
+  $('#gosteriDur').textContent = '⏸️ Duraklat';
+  $('#gosteri').classList.remove('hidden');
+
+  if (a.muzik) {
+    const adres = await medyaAdres(a.muzik.medyaId);
+    Gosteri.ses = new Audio(adres);
+    Gosteri.ses.loop = true;
+    Gosteri.ses.volume = 0.85;
+    Gosteri.ses.play().catch(() => bildir('Müzik için ekrana bir kez dokun 🎵', 'bilgi'));
+  }
+  if (tamEkran) tamEkranDegistir(true);
+  await slaytGoster(0);
+  await gunlukEkle('gosteri', `"${a.ad}" albümü izlendi`);
+  kontrolGizleSayaci();
+}
+
+async function slaytGoster(i) {
+  const oge = Gosteri.liste[i];
+  if (!oge) return;
+  Gosteri.sira = i;
+  const tema = $('#ayarTema').value;
+  const sure = parseInt($('#ayarSure').value, 10) * 1000;
+
+  const img = document.createElement('img');
+  img.className = 'slayt ' + tema;
+  img.style.setProperty('--sure', (sure + 900) + 'ms');
+  img.src = oge.adres;
+  img.alt = oge.baslik || 'Albüm fotoğrafı';
+  $('#gosteriSahne').appendChild(img);
+  requestAnimationFrame(() => requestAnimationFrame(() => img.classList.add('iceri')));
+
+  const eski = Gosteri.mevcutEl;
+  Gosteri.mevcutEl = img;
+  if (eski) { eski.classList.add('disari'); setTimeout(() => eski.remove(), 900); }
+
+  // Yazılar
+  const yazi = $('#gosteriYazi');
+  if ($('#ayarNotlar').checked) {
+    const ustSatir = [oge.baslik, tarihTR(oge.tarih), oge.yer ? '📍 ' + oge.yer : ''].filter(Boolean).join('  ·  ');
+    yazi.innerHTML = `
+      ${ustSatir ? `<p class="font-baslik text-xl md:text-2xl font-semibold drop-shadow-lg">${kacan(ustSatir)}</p>` : ''}
+      ${oge.not ? `<p class="mt-1 text-sm md:text-base text-white/85 max-w-2xl mx-auto drop-shadow">${kacan(oge.not)}</p>` : ''}`;
+  } else yazi.innerHTML = '';
+
+  $('#gosteriSayac').textContent = `${i + 1} / ${Gosteri.liste.length}`;
+
+  // İlerleme çubuğu
+  const cubuk = $('#gosteriCubuk');
+  cubuk.style.transition = 'none'; cubuk.style.width = '0%';
+  void cubuk.offsetWidth;
+  if (Gosteri.oynuyor) { cubuk.style.transition = `width ${sure}ms linear`; cubuk.style.width = '100%'; }
+
+  clearTimeout(Gosteri.zaman);
+  if (Gosteri.oynuyor) Gosteri.zaman = setTimeout(() => slaytIlerle(1), sure);
+}
+
+function slaytIlerle(yon) {
+  if (!Gosteri.liste.length) return;
+  const yeni = (Gosteri.sira + yon + Gosteri.liste.length) % Gosteri.liste.length;
+  slaytGoster(yeni);
+}
+function gosteriDurdur() {
+  Gosteri.oynuyor = !Gosteri.oynuyor;
+  $('#gosteriDur').textContent = Gosteri.oynuyor ? '⏸️ Duraklat' : '▶️ Devam et';
+  if (Gosteri.ses) Gosteri.oynuyor ? Gosteri.ses.play().catch(() => {}) : Gosteri.ses.pause();
+  if (Gosteri.oynuyor) slaytGoster(Gosteri.sira);
+  else { clearTimeout(Gosteri.zaman); const c = $('#gosteriCubuk'); c.style.transition = 'none'; c.style.width = getComputedStyle(c).width; }
+}
+function gosteriKapat() {
+  clearTimeout(Gosteri.zaman); clearTimeout(Gosteri.gizleZaman);
+  Gosteri.oynuyor = false;
+  if (Gosteri.ses) { Gosteri.ses.pause(); Gosteri.ses = null; }
+  $('#gosteri').classList.add('hidden');
+  $('#gosteriSahne').innerHTML = '';
+  Gosteri.mevcutEl = null;
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+function tamEkranDegistir(zorla = false) {
+  const el = $('#gosteri');
+  if (!document.fullscreenElement) el.requestFullscreen && el.requestFullscreen().catch(() => bildir('Tarayıcı tam ekrana izin vermedi', 'hata'));
+  else if (!zorla) document.exitFullscreen().catch(() => {});
+}
+function kontrolGizleSayaci() {
+  const el = $('#gosteri');
+  el.classList.remove('sakin');
+  clearTimeout(Gosteri.gizleZaman);
+  Gosteri.gizleZaman = setTimeout(() => el.classList.add('sakin'), 3000);
+}
+
+/* ---------- 9) DIŞA AKTARMA (PPTX / PDF) -------------------------------- */
+function fotoAltYazi(f) {
+  return [f.baslik, tarihTR(f.tarih), f.yer].filter(Boolean).join('  ·  ');
+}
+
+async function pptxAktar() {
+  const a = albumBul(); if (!a) return bildir('Önce bir albüm seç', 'hata');
+  const fotolar = tumFotograflar(a);
+  if (!fotolar.length) return bildir('Bu albümde fotoğraf yok', 'hata');
+  try {
+    bekle('Sunum hazırlanıyor…');
+    await kutuphaneGetir(KUTUPHANE.pptx, 'PptxGenJS');
+    const sunum = new PptxGenJS();
+    sunum.layout = 'LAYOUT_16x9';               // 10 x 5.625 inç
+
+    const kapak = sunum.addSlide();
+    kapak.background = {color: 'FDF6FB'};
+    kapak.addText(a.ad, {x: 0.5, y: 2.0, w: 9, h: 1.1, align: 'center', fontSize: 40, bold: true, color: '3B2B4A'});
+    kapak.addText(`${fotolar.length} fotoğraf · ${new Date().toLocaleDateString('tr-TR')}`,
+      {x: 0.5, y: 3.1, w: 9, h: 0.5, align: 'center', fontSize: 16, color: '7C6A8A'});
+
+    let sayac = 0;
+    for (const f of fotolar) {
+      const resim = await medyaVeriAdresi(f.medyaId, 1600, 0.85);
+      if (!resim) continue;
+      sayac++;
+      $('#beklemeMetin').textContent = `Sunum hazırlanıyor… ${sayac}/${fotolar.length}`;
+      const s = sunum.addSlide();
+      s.background = {color: '1B1420'};
+      s.addImage({data: resim.veri, x: 0.3, y: 0.25, w: 9.4, h: 4.2, sizing: {type: 'contain', w: 9.4, h: 4.2}});
+      const ust = fotoAltYazi(f);
+      if (ust) s.addText(ust, {x: 0.4, y: 4.6, w: 9.2, h: 0.4, fontSize: 16, bold: true, color: 'FFFFFF'});
+      if (f.not) {
+        s.addText(f.not, {x: 0.4, y: 5.0, w: 9.2, h: 0.5, fontSize: 12, color: 'E6DDEA'});
+        s.addNotes(f.not);
+      }
+    }
+    await sunum.writeFile({fileName: temizAd(a.ad) + '.pptx'});
+    bekleKapat();
+    await gunlukEkle('disa', `"${a.ad}" sunum olarak indirildi (.pptx)`);
+    bildir('Sunum indirildi 📊');
+  } catch (e) {
+    bekleKapat(); bildir(e.message || 'Sunum oluşturulamadı', 'hata');
+  }
+}
+
+async function pdfAktar() {
+  const a = albumBul(); if (!a) return bildir('Önce bir albüm seç', 'hata');
+  const fotolar = tumFotograflar(a);
+  if (!fotolar.length) return bildir('Bu albümde fotoğraf yok', 'hata');
+  try {
+    bekle('PDF hazırlanıyor…');
+    await kutuphaneGetir(KUTUPHANE.jspdf, 'jspdf');
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'}); // 297 x 210
+    const G = 297, Y = 210, kenar = 14;
+
+    // Kapak (yazılar görsel olarak basılıyor ki Türkçe harfler bozulmasın)
+    pdf.setFillColor(253, 246, 251); pdf.rect(0, 0, G, Y, 'F');
+    const kapakYazi = yaziGorseli([a.ad], {punto: 90, kalin: true, hiza: 'center'});
+    pdf.addImage(kapakYazi.veri, 'PNG', kenar, 78, G - kenar * 2, (G - kenar * 2) * kapakYazi.y / kapakYazi.g);
+    const altYazi = yaziGorseli([`${fotolar.length} fotoğraf · ${new Date().toLocaleDateString('tr-TR')}`],
+      {punto: 40, hiza: 'center', renk: '#7C6A8A'});
+    pdf.addImage(altYazi.veri, 'PNG', kenar, 112, G - kenar * 2, (G - kenar * 2) * altYazi.y / altYazi.g);
+
+    let sayac = 0;
+    for (const f of fotolar) {
+      const resim = await medyaVeriAdresi(f.medyaId, 1500, 0.82);
+      if (!resim) continue;
+      sayac++;
+      $('#beklemeMetin').textContent = `PDF hazırlanıyor… ${sayac}/${fotolar.length}`;
+      pdf.addPage();
+      pdf.setFillColor(27, 20, 32); pdf.rect(0, 0, G, Y, 'F');
+
+      const alanG = G - kenar * 2, alanY = 150;
+      const olcek = Math.min(alanG / resim.g, alanY / resim.y);
+      const g = resim.g * olcek, y = resim.y * olcek;
+      pdf.addImage(resim.veri, 'JPEG', (G - g) / 2, 12 + (alanY - y) / 2, g, y);
+
+      const ust = fotoAltYazi(f);
+      let imlec = 172;
+      if (ust) {
+        const s = yaziGorseli([ust], {punto: 42, kalin: true, renk: '#FFFFFF', hiza: 'center'});
+        const yh = alanG * s.y / s.g;
+        pdf.addImage(s.veri, 'PNG', kenar, imlec, alanG, yh); imlec += yh + 3;
+      }
+      if (f.not) {
+        const s = yaziGorseli([f.not], {punto: 32, renk: '#E6DDEA', hiza: 'center'});
+        let notG = alanG, notY = alanG * s.y / s.g;
+        const kalanY = Y - imlec - 6;
+        if (notY > kalanY) { notG = notG * kalanY / notY; notY = kalanY; }
+        pdf.addImage(s.veri, 'PNG', (G - notG) / 2, imlec, notG, notY);
+      }
+    }
+    pdf.save(temizAd(a.ad) + '.pdf');
+    bekleKapat();
+    await gunlukEkle('disa', `"${a.ad}" PDF olarak indirildi`);
+    bildir('PDF indirildi 📄');
+  } catch (e) {
+    bekleKapat(); bildir(e.message || 'PDF oluşturulamadı', 'hata');
+  }
+}
+
+/* ---------- 10) YEDEKLEME (.album = zip) -------------------------------- */
+function albumMedyaIdleri(a) {
+  const idler = tumFotograflar(a).map(f => f.medyaId);
+  if (a.muzik) idler.push(a.muzik.medyaId);
+  return idler;
+}
+
+async function yedekAl() {
+  if (!durum.albumler.length) return bildir('Yedeklenecek albüm yok', 'hata');
+  try {
+    bekle('Yedek dosyası hazırlanıyor…');
+    await kutuphaneGetir(KUTUPHANE.jszip, 'JSZip');
+    const zip = new JSZip();
+    const medyaKlasor = zip.folder('medya');
+    const medyaListe = [];
+
+    let sayac = 0;
+    const tumId = [...new Set(durum.albumler.flatMap(albumMedyaIdleri))];
+    for (const id of tumId) {
+      const m = await VT.getir('medya', id);
+      if (!m) continue;
+      sayac++;
+      $('#beklemeMetin').textContent = `Dosyalar paketleniyor… ${sayac}/${tumId.length}`;
+      medyaKlasor.file(id, m.blob);
+      medyaListe.push({id, ad: m.ad, tip: m.tip});
+    }
+    zip.file('manifest.json', JSON.stringify({
+      uygulama: 'ani-defteri', surum: 1, tarih: Date.now(),
+      albumler: durum.albumler, gunluk: durum.gunluk, medya: medyaListe
+    }, null, 2));
+    zip.file('OKUBENI.txt',
+      'Ani Defteri yedegi.\nBu dosyayi acmak icin uygulamada "Yedegi geri yukle" dugmesini kullan.\nIcerik: manifest.json (albumler + notlar) ve medya/ klasoru (fotograflar, muzik).');
+
+    $('#beklemeMetin').textContent = 'Sıkıştırılıyor…';
+    const blob = await zip.generateAsync({type: 'blob', compression: 'DEFLATE', compressionOptions: {level: 3}});
+    const adres = URL.createObjectURL(blob);
+    const bag = document.createElement('a');
+    bag.href = adres;
+    bag.download = `ani-defteri-${new Date().toISOString().slice(0, 10)}.album`;
+    bag.click();
+    setTimeout(() => URL.revokeObjectURL(adres), 4000);
+
+    await VT.yaz('ayar', {k: 'sonYedek', v: Date.now()});
+    await gunlukEkle('yedek', `Yedek alındı (${durum.albumler.length} albüm, ${boyut(blob.size)})`);
+    bekleKapat(); yedekHatirlat();
+    bildir('Yedek indirildi 💾');
+  } catch (e) {
+    bekleKapat(); bildir(e.message || 'Yedek alınamadı', 'hata');
+  }
+}
+
+async function yedekYukle() {
+  const [dosya] = await dosyaSec('.album,.zip,application/zip', false);
+  if (!dosya) return;
+  if (!confirm('Yedekteki albümler mevcut albümlerin yanına eklenecek. Aynı albümün eski hâli varsa yedektekiyle değişir. Devam edelim mi?')) return;
+  try {
+    bekle('Yedek okunuyor…');
+    await kutuphaneGetir(KUTUPHANE.jszip, 'JSZip');
+    const zip = await JSZip.loadAsync(dosya);
+    const bilgiDosya = zip.file('manifest.json');
+    if (!bilgiDosya) throw new Error('Bu dosya bir Anı Defteri yedeği değil.');
+    const bilgi = JSON.parse(await bilgiDosya.async('string'));
+
+    let sayac = 0;
+    for (const m of (bilgi.medya || [])) {
+      const dosyaGirdi = zip.file('medya/' + m.id);
+      if (!dosyaGirdi) continue;
+      sayac++;
+      $('#beklemeMetin').textContent = `Dosyalar geri yükleniyor… ${sayac}/${bilgi.medya.length}`;
+      const ham = await dosyaGirdi.async('blob');
+      await VT.yaz('medya', {id: m.id, ad: m.ad, tip: m.tip, blob: new Blob([ham], {type: m.tip})});
+    }
+    for (const a of (bilgi.albumler || [])) {
+      await VT.yaz('albumler', a);
+      const i = durum.albumler.findIndex(x => x.id === a.id);
+      if (i >= 0) durum.albumler[i] = a; else durum.albumler.push(a);
+    }
+    for (const k of (bilgi.gunluk || [])) {
+      if (!durum.gunluk.some(x => x.id === k.id)) { await VT.yaz('gunluk', k); durum.gunluk.push(k); }
+    }
+    durum.gunluk.sort((a, b) => a.ts - b.ts);
+    durum.albumler.sort((a, b) => a.olusturuldu - b.olusturuldu);
+    if (!albumBul() && durum.albumler[0]) durum.seciliAlbum = durum.albumler[0].id;
+
+    await gunlukEkle('geri', `Yedek geri yüklendi (${(bilgi.albumler || []).length} albüm)`);
+    bekleKapat();
+    seritCiz(); albumCiz(); onizlemeCiz(); zamanCiz(); depoDurumu();
+    bildir('Albümlerin geri geldi 🎉');
+  } catch (e) {
+    bekleKapat(); bildir(e.message || 'Yedek okunamadı', 'hata');
+  }
+}
+
+async function yedekHatirlat() {
+  const kayit = await VT.getir('ayar', 'sonYedek');
+  const kutu = $('#hatirlatici'), metin = $('#hatirlaticiMetin');
+  if (!durum.albumler.length) { kutu.classList.add('hidden'); return; }
+  if (!kayit) {
+    metin.innerHTML = 'Henüz hiç yedek almadın. Fotoğraflar sadece bu tarayıcıda duruyor — <strong>Yedek al</strong> dersen başka cihaza da taşıyabilirsin.';
+    kutu.classList.remove('hidden'); return;
+  }
+  const gun = Math.floor((Date.now() - kayit.v) / 86400000);
+  if (gun >= 7) {
+    metin.innerHTML = `Son yedeğin <strong>${gun} gün</strong> önce alındı. Yeni fotoğraflar için tekrar yedek almayı unutma.`;
+    kutu.classList.remove('hidden');
+  } else kutu.classList.add('hidden');
+}
+
+async function depoDurumu() {
+  const el = $('#depoBilgi');
+  if (!navigator.storage || !navigator.storage.estimate) { el.textContent = ''; return; }
+  try {
+    const {usage, quota} = await navigator.storage.estimate();
+    const kalici = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+    el.textContent = `Kullanılan yer: ${boyut(usage || 0)} / ${boyut(quota || 0)} · Kalıcı depolama izni: ${kalici ? 'var ✅' : 'yok ⚠️'}`;
+  } catch { el.textContent = ''; }
+}
+
+/* ---------- 11) ZAMAN TÜNELİ -------------------------------------------- */
+function zamanCiz() {
+  const kutu = $('#zamanListesi');
+  if (!durum.gunluk.length) {
+    kutu.innerHTML = `<div class="text-center py-10">
+      <div class="text-4xl mb-2">⏳</div>
+      <p class="font-semibold">Burası şimdilik boş</p>
+      <p class="text-soluk text-sm">Albüm oluşturdukça yaptığın her şey tarih ve saatiyle buraya düşecek.</p>
+    </div>`;
+    return;
+  }
+  const gunler = {};
+  [...durum.gunluk].sort((a, b) => b.ts - a.ts).forEach(k => {
+    const anahtar = new Date(k.ts).toDateString();
+    (gunler[anahtar] = gunler[anahtar] || []).push(k);
+  });
+  kutu.innerHTML = Object.entries(gunler).map(([, kayitlar]) => `
+    <div>
+      <p class="font-baslik font-semibold text-soluk mb-2">${gunAdi(kayitlar[0].ts)}</p>
+      <div class="border-l-2 border-cizgi pl-5 space-y-3">
+        ${kayitlar.map(k => `
+          <div class="relative timeline-nokta">
+            <p class="text-sm"><span class="mr-1">${SIMGE[k.tur] || '•'}</span>${kacan(k.metin)}</p>
+            <p class="text-xs text-soluk">${saat(k.ts)}</p>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+/* ---------- 12) BAĞLANTILAR (olaylar) ----------------------------------- */
+function sureYaz() { $('#ayarSureMetin').textContent = $('#ayarSure').value + ' sn'; }
+
+function sekmeAc(ad) {
+  durum.sekme = ad;
+  $$('[role="tab"]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sekme === ad)));
+  $$('[data-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.panel !== ad));
+  if (ad === 'zaman') { zamanCiz(); depoDurumu(); }
+  if (ad === 'onizleme') onizlemeCiz();
+}
+
+$$('[role="tab"]').forEach(b => b.onclick = () => sekmeAc(b.dataset.sekme));
+$('#btnYeniAlbum').onclick   = yeniAlbum;
+$('#btnYedekAl').onclick     = yedekAl;
+$('#btnYedekYukle').onclick  = yedekYukle;
+
+$('#fotoKapat').onclick   = fotoKapat;
+$('#fotoKaydet').onclick  = fotoKaydet;
+$('#fotoSil').onclick     = fotoSilAksiyon;
+$('#fotoKapak').onclick   = fotoKapakYap;
+$('#fotoPencere').addEventListener('click', e => { if (e.target.id === 'fotoPencere') fotoKapat(); });
+
+$('#ayarSure').addEventListener('input', sureYaz);
+['#ayarTema', '#ayarSure'].forEach(s => $(s).addEventListener('change', () =>
+  VT.yaz('ayar', {k: 'gosteri', v: {tema: $('#ayarTema').value, sure: parseInt($('#ayarSure').value, 10)}})));
+
+$('#btnGosteriBaslat').onclick = () => gosteriBaslat(false);
+$('#btnTamEkran').onclick      = () => gosteriBaslat(true);
+$('#gosteriKapat').onclick     = gosteriKapat;
+$('#gosteriGeri').onclick      = () => slaytIlerle(-1);
+$('#gosteriIleri').onclick     = () => slaytIlerle(1);
+$('#gosteriDur').onclick       = gosteriDurdur;
+$('#gosteriEkran').onclick     = () => tamEkranDegistir();
+['mousemove', 'touchstart', 'click'].forEach(o => $('#gosteri').addEventListener(o, kontrolGizleSayaci));
+
+$('#btnPptx').onclick = pptxAktar;
+$('#btnPdf').onclick  = pdfAktar;
+
+$('#btnGunlukTemizle').onclick = async () => {
+  if (!confirm('Zaman tünelindeki kayıtlar silinsin mi? (Fotoğraflar ve albümler etkilenmez)')) return;
+  await VT.bosalt('gunluk'); durum.gunluk = []; zamanCiz(); bildir('Geçmiş temizlendi 🧹');
+};
+
+document.addEventListener('keydown', e => {
+  if (!$('#gosteri').classList.contains('hidden')) {
+    if (e.key === 'Escape') gosteriKapat();
+    if (e.key === 'ArrowRight') slaytIlerle(1);
+    if (e.key === 'ArrowLeft') slaytIlerle(-1);
+    if (e.key === ' ') { e.preventDefault(); gosteriDurdur(); }
+    return;
+  }
+  if (e.key === 'Escape' && !$('#fotoPencere').classList.contains('hidden')) fotoKapat();
+});
+
+window.yeniAlbum = yeniAlbum;   // boş ekrandaki düğme için
+
+baslat().catch(e => {
+  console.error(e);
+  bildir('Uygulama açılamadı: ' + (e.message || e), 'hata');
+});
+</script>
+</body>
+</html>
