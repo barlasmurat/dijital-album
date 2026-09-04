@@ -1,0 +1,10 @@
+[
+  { "file": "huzurlu-piyano.mp3",   "title": "Huzurlu Piyano",   "genre": "classical" },
+  { "file": "nesli-gunler.mp3",     "title": "Neşeli Günler",    "genre": "pop" },
+  { "file": "yaz-enerjisi.mp3",     "title": "Yaz Enerjisi",     "genre": "rock" },
+  { "file": "aksam-caz.mp3",        "title": "Akşam Cazı",       "genre": "jazz" },
+  { "file": "sokak-ritmi.mp3",      "title": "Sokak Ritmi",      "genre": "rap" },
+  { "file": "dans-gecesi.mp3",      "title": "Dans Gecesi",      "genre": "electronic" },
+  { "file": "sakin-sabah.mp3",      "title": "Sakin Sabah",      "genre": "ambient" },
+  { "file": "veda-teması.mp3",      "title": "Veda Teması",      "genre": "cinematic" }
+]
