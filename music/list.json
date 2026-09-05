@@ -1,6 +1,9 @@
 [
   { "file": "huzurlu-piyano.mp3",   "title": "Huzurlu Piyano",   "genre": "classical" },
-  { "file": "nesli-gunler.mp3",     "title": "Neşeli Günler",    "genre": "pop" },
+  { "file": "Despacito.mp3",     "title": "Despacito",    "genre": "pop" },
+  { "file": "Dance Monkey.mp3",     "title": "Dance Monkey",    "genre": "pop" },
+  { "file": "Easy On Me.mp3",     "title": "Easy On Me",    "genre": "pop" },
+  { "file": "Shape of You.mp3",     "title": "Shape of You",    "genre": "pop" },
   { "file": "yaz-enerjisi.mp3",     "title": "Yaz Enerjisi",     "genre": "rock" },
   { "file": "aksam-caz.mp3",        "title": "Akşam Cazı",       "genre": "jazz" },
   { "file": "sokak-ritmi.mp3",      "title": "Sokak Ritmi",      "genre": "rap" },
