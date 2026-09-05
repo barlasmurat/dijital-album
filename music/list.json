@@ -4,10 +4,10 @@
   { "file": "Dance Monkey.mp3",     "title": "Dance Monkey",    "genre": "pop" },
   { "file": "Easy On Me.mp3",     "title": "Easy On Me",    "genre": "pop" },
   { "file": "Shape of You.mp3",     "title": "Shape of You",    "genre": "pop" },
-  { "file": "yaz-enerjisi.mp3",     "title": "Yaz Enerjisi",     "genre": "rock" },
-  { "file": "aksam-caz.mp3",        "title": "Akşam Cazı",       "genre": "jazz" },
-  { "file": "sokak-ritmi.mp3",      "title": "Sokak Ritmi",      "genre": "rap" },
-  { "file": "dans-gecesi.mp3",      "title": "Dans Gecesi",      "genre": "electronic" },
-  { "file": "sakin-sabah.mp3",      "title": "Sakin Sabah",      "genre": "ambient" },
-  { "file": "veda-teması.mp3",      "title": "Veda Teması",      "genre": "cinematic" }
+  { "file": "Lady Gaga, Bruno Mars - Die With A Smile.mp3",     "title": "Lady Gaga, Bruno Mars - Die With A Smile",    "genre": "pop" },
+  { "file": "Espresso.mp3",     "title": "Espresso",    "genre": "pop" },
+  { "file": "You're Beautiful.mp3",     "title": "You're Beautiful",    "genre": "pop" },
+  { "file": "My Way.mp3",     "title": "My Way",    "genre": "pop" },
+  { "file": "Coldplay - Yellow.mp3",     "title": "Coldplay - Yellow",    "genre": "pop" },
+  { "file": "Benson Boone - Beautiful Things.mp3",     "title": "Benson Boone - Beautiful Things",    "genre": "rock" }
 ]
